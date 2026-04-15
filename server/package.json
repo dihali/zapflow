@@ -1,0 +1,37 @@
+{
+  "name": "zapflow-server",
+  "version": "1.0.0",
+  "description": "ZapFlow backend - WhatsApp campaign SaaS",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "worker": "node src/workers/message.worker.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@prisma/client": "^5.22.0",
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "axios": "^1.7.9",
+    "baileys": "github:EvolutionAPI/Baileys",
+    "bcryptjs": "^2.4.3",
+    "bullmq": "^5.28.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prisma": "^5.22.0"
+  }
+}

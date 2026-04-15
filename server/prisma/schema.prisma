@@ -1,0 +1,77 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  password     String
+  instanceName String?
+  instanceKey  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  contacts     Contact[]
+  campaigns    Campaign[]
+}
+
+model Contact {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String
+  tags      String[]  @default([])
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, phone])
+}
+
+model Campaign {
+  id           String         @id @default(uuid())
+  name         String
+  originalText String
+  variations   String[]       @default([])
+  status       CampaignStatus @default(DRAFT)
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Message {
+  id         String        @id @default(uuid())
+  campaignId String
+  campaign   Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contactId  String
+  contact    Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  content    String
+  status     MessageStatus @default(PENDING)
+  sentAt     DateTime?
+  error      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+enum CampaignStatus {
+  DRAFT
+  APPROVED
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+enum MessageStatus {
+  PENDING
+  QUEUED
+  SENT
+  FAILED
+}
