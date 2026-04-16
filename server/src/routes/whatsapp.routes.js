@@ -4,8 +4,8 @@ const auth = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const {
   connectInstance,
-  startAndGetQR,
   getInstanceStatus,
+  restartInstance,
   disconnectInstance,
 } = require('../services/whatsapp.service');
 
@@ -19,16 +19,25 @@ async function getInstanceName(userId) {
   return user?.instanceName || null;
 }
 
-// POST /api/whatsapp/connect — inicia conexão em background e retorna imediatamente
+// POST /api/whatsapp/connect — inicia conexão em background
 router.post('/connect', auth, async (req, res, next) => {
   try {
     const instanceName = await getInstanceName(req.userId);
     if (!instanceName) {
       return res.status(400).json({ error: 'Configure um instanceName no seu perfil primeiro.' });
     }
-    // Inicia em background sem esperar
     connectInstance(instanceName).catch(console.error);
     res.json({ status: 'connecting' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/whatsapp/restart — força restart da sessão WAHA
+router.post('/restart', auth, async (req, res, next) => {
+  try {
+    restartInstance().catch(console.error);
+    res.json({ status: 'restarting' });
   } catch (err) {
     next(err);
   }

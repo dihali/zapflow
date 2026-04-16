@@ -20,14 +20,30 @@ async function getSessionStatus() {
   }
 }
 
+// Para e recria a sessão do zero (resolve travamento em STARTING)
+async function forceRestartSession() {
+  console.log('[waha] Forçando restart da sessão...');
+  try { await waha.post(`/api/sessions/${SESSION}/stop`); } catch { /* ignora */ }
+  await new Promise(r => setTimeout(r, 1500));
+  try { await waha.delete(`/api/sessions/${SESSION}`); } catch { /* ignora */ }
+  await new Promise(r => setTimeout(r, 1000));
+  try { await waha.post('/api/sessions', { name: SESSION }); } catch { /* ignora */ }
+  await new Promise(r => setTimeout(r, 1500));
+  console.log('[waha] Sessão recriada.');
+}
+
 async function ensureStarted() {
   const status = await getSessionStatus();
   if (status === 'WORKING') return;
-  if (status === 'NOT_FOUND') {
-    await waha.post('/api/sessions', { name: SESSION });
+  if (status === 'NOT_FOUND' || status === 'STOPPED') {
+    if (status === 'NOT_FOUND') {
+      await waha.post('/api/sessions', { name: SESSION });
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    await waha.post(`/api/sessions/${SESSION}/start`).catch(() => {});
   }
-  if (status === 'STOPPED' || status === 'FAILED' || status === 'NOT_FOUND') {
-    await waha.post(`/api/sessions/${SESSION}/start`);
+  if (status === 'FAILED') {
+    await forceRestartSession();
   }
 }
 
@@ -53,6 +69,7 @@ async function getInstanceStatus() {
 
 async function startAndGetQR() {
   await ensureStarted();
+  // Aguarda até 30s para sair do STARTING
   for (let i = 0; i < 30; i++) {
     const result = await getInstanceStatus();
     if (result.status === 'open') return result;
@@ -60,6 +77,11 @@ async function startAndGetQR() {
     await new Promise(r => setTimeout(r, 1000));
   }
   return await getInstanceStatus();
+}
+
+// Reinicia sessão completamente — chamado pelo endpoint /restart
+async function restartInstance() {
+  await forceRestartSession();
 }
 
 async function sendTextMessage({ phone, text }) {
@@ -92,6 +114,7 @@ module.exports = {
   connectInstance,
   getInstanceStatus,
   startAndGetQR,
+  restartInstance,
   sendTextMessage,
   disconnectInstance,
 };

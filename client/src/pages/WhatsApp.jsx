@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 
 const STATUS_LABEL = {
-  disconnected: { text: 'Desconectado', color: '#ef4444' },
-  connecting:   { text: 'Conectando...', color: '#f59e0b' },
-  qr:           { text: 'Aguardando scan', color: '#f59e0b' },
-  open:         { text: 'Conectado', color: '#22c55e' },
-  close:        { text: 'Desconectado', color: '#ef4444' },
+  disconnected: { text: 'Desconectado',     color: '#ef4444' },
+  connecting:   { text: 'Conectando...',    color: '#f59e0b' },
+  restarting:   { text: 'Reiniciando...',   color: '#f59e0b' },
+  qr:           { text: 'Aguardando scan',  color: '#f59e0b' },
+  open:         { text: 'Conectado',        color: '#22c55e' },
+  close:        { text: 'Desconectado',     color: '#ef4444' },
 };
 
 export default function WhatsApp() {
@@ -16,6 +17,8 @@ export default function WhatsApp() {
   const [instanceName, setInstanceName] = useState('');
   const [editName, setEditName]         = useState('');
   const [saving, setSaving]             = useState(false);
+  const connectingSecondsRef            = useRef(0);
+  const [connectingTooLong, setConnectingTooLong] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -35,9 +38,20 @@ export default function WhatsApp() {
 
   // Polling enquanto conectando ou aguardando scan
   useEffect(() => {
-    if (status === 'connecting' || status === 'qr') {
-      const t = setInterval(fetchStatus, 2000);
+    if (status === 'connecting' || status === 'restarting' || status === 'qr') {
+      connectingSecondsRef.current = 0;
+      setConnectingTooLong(false);
+      const t = setInterval(() => {
+        connectingSecondsRef.current += 2;
+        // Depois de 20s conectando sem QR, mostra botão de reiniciar
+        if (connectingSecondsRef.current >= 20 && status === 'connecting') {
+          setConnectingTooLong(true);
+        }
+        fetchStatus();
+      }, 2000);
       return () => clearInterval(t);
+    } else {
+      setConnectingTooLong(false);
     }
   }, [status, fetchStatus]);
 
@@ -57,15 +71,25 @@ export default function WhatsApp() {
   async function handleConnect() {
     setLoading(true);
     setQr(null);
+    setConnectingTooLong(false);
     try {
-      // Inicia conexão em background (retorna imediatamente)
       await api.post('/whatsapp/connect');
       setStatus('connecting');
-      // O polling vai buscar o QR assim que aparecer
     } catch (e) {
       alert('Erro ao conectar: ' + (e.response?.data?.error || e.message));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRestart() {
+    setQr(null);
+    setConnectingTooLong(false);
+    try {
+      await api.post('/whatsapp/restart');
+      setStatus('restarting');
+    } catch (e) {
+      alert('Erro ao reiniciar: ' + (e.response?.data?.error || e.message));
     }
   }
 
@@ -77,12 +101,13 @@ export default function WhatsApp() {
   }
 
   const statusInfo = STATUS_LABEL[status] || STATUS_LABEL.disconnected;
+  const isConnecting = status === 'connecting' || status === 'restarting';
 
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 16px' }}>
       <h2 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Conexão WhatsApp</h2>
 
-      {/* Configuração do instanceName */}
+      {/* Nome da instância */}
       <div style={{
         background: '#f8fafc', border: '1px solid #e2e8f0',
         borderRadius: 10, padding: 16, marginBottom: 24,
@@ -125,15 +150,35 @@ export default function WhatsApp() {
             padding: '6px 14px', borderRadius: 999,
             background: statusInfo.color + '1a',
             color: statusInfo.color,
-            fontWeight: 600, fontSize: 14, marginBottom: 24,
+            fontWeight: 600, fontSize: 14, marginBottom: 16,
           }}>
             <span style={{
               width: 8, height: 8, borderRadius: '50%',
               background: statusInfo.color, display: 'inline-block',
-              animation: (status === 'connecting' || status === 'qr') ? 'pulse 1.2s infinite' : 'none',
+              animation: isConnecting || status === 'qr' ? 'pulse 1.2s infinite' : 'none',
             }} />
             {statusInfo.text}
           </div>
+
+          {/* Aviso de travamento + botão reiniciar */}
+          {connectingTooLong && (
+            <div style={{
+              padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a',
+              borderRadius: 10, marginBottom: 16, fontSize: 13, color: '#92400e',
+            }}>
+              ⚠️ A conexão está demorando mais que o esperado. Isso pode acontecer na primeira inicialização do servidor.
+              <br />
+              <button
+                onClick={handleRestart}
+                style={{
+                  marginTop: 10, padding: '7px 14px', background: '#f59e0b', color: '#fff',
+                  border: 'none', borderRadius: 7, cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                }}
+              >
+                🔄 Reiniciar sessão WhatsApp
+              </button>
+            </div>
+          )}
 
           {/* QR code */}
           {qr && status === 'qr' && (
@@ -159,21 +204,31 @@ export default function WhatsApp() {
           )}
 
           {/* Botões */}
-          <div style={{ display: 'flex', gap: 12 }}>
-            {status !== 'open' && (
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            {status !== 'open' && !isConnecting && status !== 'qr' && (
               <button
                 onClick={handleConnect}
-                disabled={loading || status === 'connecting' || status === 'qr'}
+                disabled={loading}
                 style={{
                   padding: '10px 20px', background: '#6366f1', color: '#fff',
                   border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600,
-                  opacity: (loading || status === 'connecting' || status === 'qr') ? 0.6 : 1,
+                  opacity: loading ? 0.6 : 1,
                 }}
               >
-                {loading ? 'Iniciando...' : status === 'connecting' ? 'Conectando...' : status === 'qr' ? 'Aguardando scan...' : 'Conectar WhatsApp'}
+                {loading ? 'Iniciando...' : 'Conectar WhatsApp'}
               </button>
             )}
-            {(status === 'open' || status === 'qr' || status === 'connecting') && (
+
+            {isConnecting && (
+              <button disabled style={{
+                padding: '10px 20px', background: '#6366f1', color: '#fff',
+                border: 'none', borderRadius: 8, fontWeight: 600, opacity: 0.6, cursor: 'not-allowed',
+              }}>
+                Conectando...
+              </button>
+            )}
+
+            {(status === 'open' || status === 'qr' || isConnecting) && (
               <button
                 onClick={handleDisconnect}
                 style={{
