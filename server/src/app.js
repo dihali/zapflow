@@ -10,8 +10,19 @@ const whatsappRoutes = require('./routes/whatsapp.routes');
 
 const app = express();
 
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim());
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (ex: curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origem não permitida: ${origin}`));
+    }
+  },
   credentials: true,
 }));
 
