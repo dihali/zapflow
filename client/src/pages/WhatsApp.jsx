@@ -185,8 +185,8 @@ export default function WhatsApp() {
             <div style={{ textAlign: 'center', marginBottom: 28, padding: '24px 0' }}>
               <div style={{
                 display: 'inline-block',
-                width: 300,
-                height: 300,
+                width: 350,
+                height: 350,
                 overflow: 'hidden',
                 borderRadius: 16,
                 border: '2px solid #e2e8f0',
@@ -197,10 +197,10 @@ export default function WhatsApp() {
                   src={qr}
                   alt="QR Code WhatsApp"
                   style={{
-                    width: 300,
-                    height: 300,
-                    objectFit: 'none',
-                    objectPosition: 'right top',
+                    width: 350,
+                    height: 350,
+                    objectFit: 'cover',
+                    objectPosition: 'left bottom',
                     display: 'block',
                   }}
                 />
