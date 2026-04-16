@@ -51,13 +51,32 @@ async function connectInstance() {
   await ensureStarted();
 }
 
+async function extractQRFromScreenshot() {
+  const Jimp   = require('jimp');
+  const jsQR   = require('jsqr');
+  const QRCode = require('qrcode');
+
+  const { data: buf } = await waha.get(`/api/screenshot?session=${SESSION}`, { responseType: 'arraybuffer' });
+  const image = await Jimp.read(Buffer.from(buf));
+  const { data, width, height } = image.bitmap;
+
+  const code = jsQR(new Uint8ClampedArray(data), width, height);
+  if (!code) return null;
+
+  // Gera QR limpo 400x400
+  return await QRCode.toDataURL(code.data, {
+    width: 400,
+    margin: 2,
+    color: { dark: '#000000', light: '#ffffff' },
+  });
+}
+
 async function getInstanceStatus() {
   const status = await getSessionStatus();
   if (status === 'WORKING') return { status: 'open', qr: null };
   if (status === 'SCAN_QR_CODE') {
     try {
-      const { data } = await waha.get(`/api/screenshot?session=${SESSION}`, { responseType: 'arraybuffer' });
-      const qr = 'data:image/png;base64,' + Buffer.from(data).toString('base64');
+      const qr = await extractQRFromScreenshot();
       return { status: 'qr', qr };
     } catch {
       return { status: 'qr', qr: null };
