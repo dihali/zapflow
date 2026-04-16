@@ -106,7 +106,7 @@ export default function WhatsApp() {
   const isConnecting = status === 'connecting' || status === 'restarting';
 
   return (
-    <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 16px' }}>
+    <div style={{ maxWidth: 860, margin: '40px auto', padding: '0 16px' }}>
       <h2 style={{ marginBottom: 24, fontSize: 22, fontWeight: 700 }}>Conexão WhatsApp</h2>
 
       {/* Nome da instância */}
