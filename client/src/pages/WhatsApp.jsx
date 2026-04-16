@@ -188,7 +188,7 @@ export default function WhatsApp() {
               <img
                 src={qr}
                 alt="QR Code WhatsApp"
-                style={{ width: '100%', maxWidth: 500, height: 'auto', borderRadius: 12 }}
+                style={{ width: '100%', maxWidth: 800, height: 'auto', borderRadius: 12 }}
               />
               <p style={{ color: '#374151', fontSize: 14, fontWeight: 600, marginTop: 16 }}>
                 Escaneie o QR code com seu WhatsApp
