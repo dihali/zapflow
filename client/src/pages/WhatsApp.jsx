@@ -182,13 +182,25 @@ export default function WhatsApp() {
 
           {/* QR code */}
           {qr && status === 'qr' && (
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <img
-                src={qr}
-                alt="QR Code WhatsApp"
-                style={{ width: 260, height: 260, border: '2px solid #e2e8f0', borderRadius: 12 }}
-              />
-              <p style={{ color: '#64748b', fontSize: 13, marginTop: 10 }}>
+            <div style={{ textAlign: 'center', marginBottom: 28, padding: '24px 0' }}>
+              <div style={{
+                display: 'inline-block',
+                padding: 16,
+                background: '#fff',
+                border: '2px solid #e2e8f0',
+                borderRadius: 16,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+              }}>
+                <img
+                  src={qr}
+                  alt="QR Code WhatsApp"
+                  style={{ width: 320, height: 320, display: 'block' }}
+                />
+              </div>
+              <p style={{ color: '#374151', fontSize: 14, fontWeight: 600, marginTop: 16 }}>
+                Escaneie o QR code com seu WhatsApp
+              </p>
+              <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
                 Abra o WhatsApp → Dispositivos conectados → Conectar dispositivo
               </p>
             </div>
