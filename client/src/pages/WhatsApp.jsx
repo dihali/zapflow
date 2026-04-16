@@ -13,6 +13,7 @@ const STATUS_LABEL = {
 export default function WhatsApp() {
   const [status, setStatus]             = useState('disconnected');
   const [qr, setQr]                     = useState(null);
+  const [qrIsScreenshot, setQrIsScreenshot] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [instanceName, setInstanceName] = useState('');
   const [editName, setEditName]         = useState('');
@@ -25,6 +26,7 @@ export default function WhatsApp() {
       const { data } = await api.get('/whatsapp/status');
       setStatus(data.status);
       setQr(data.qr || null);
+      setQrIsScreenshot(!!data.isScreenshot);
     } catch { /* silencioso */ }
   }, []);
 
@@ -183,21 +185,11 @@ export default function WhatsApp() {
           {/* QR code */}
           {qr && status === 'qr' && (
             <div style={{ textAlign: 'center', marginBottom: 28, padding: '24px 0' }}>
-              <div style={{
-                display: 'inline-block',
-                borderRadius: 16,
-                border: '2px solid #e2e8f0',
-                boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-                background: '#fff',
-                overflow: 'hidden',
-                maxWidth: '100%',
-              }}>
-                <img
-                  src={qr}
-                  alt="QR Code WhatsApp"
-                  style={{ display: 'block', width: 480, maxWidth: '100%', height: 'auto' }}
-                />
-              </div>
+              <img
+                src={qr}
+                alt="QR Code WhatsApp"
+                style={{ width: '100%', maxWidth: 500, height: 'auto', borderRadius: 12 }}
+              />
               <p style={{ color: '#374151', fontSize: 14, fontWeight: 600, marginTop: 16 }}>
                 Escaneie o QR code com seu WhatsApp
               </p>
