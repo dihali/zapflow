@@ -1,5 +1,3 @@
-FROM devlikeapro/whatsapp-http-api:latest
+FROM devlikeapro/waha:chrome
 
-# Desabilita persistência de sessão no disco (filesystem efêmero no Railway)
-ENV NOWEB_STORE_ENABLED=false
-ENV WHATSAPP_FILES_LIFETIME=0
+ENV WHATSAPP_DEFAULT_ENGINE=WEBJS
