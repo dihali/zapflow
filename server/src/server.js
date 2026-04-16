@@ -12,6 +12,7 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../.env'), 
 
 process.stdout.write('[ZapFlow] Loading app...\n');
 const app = require('./app');
+const { startWorker } = require('./workers/message.worker');
 
 const PORT = process.env.PORT || 3001;
 process.stdout.write('[ZapFlow] Binding to port ' + PORT + '...\n');
@@ -19,4 +20,6 @@ process.stdout.write('[ZapFlow] Binding to port ' + PORT + '...\n');
 app.listen(PORT, () => {
         console.log('[ZapFlow] Server running on port ' + PORT);
         console.log('[ZapFlow] Env: ' + process.env.NODE_ENV);
+        startWorker();
+        console.log('[ZapFlow] Worker iniciado');
 });
